@@ -6,10 +6,10 @@ csqrt(z) = sqrt(complex(z))
 
 # Need to turn domains into abstract arrays to make the dot syntax work
 # (e.g. greens(domain(-1,1),[-2,0,2]) )
-abstract Domain{T} <: AbstractVector{T}
+abstract type Domain{T} <: AbstractVector{T} end
 Base.size(::Domain) = (1,)
 Base.getindex(D::Domain,i::Int) = D
-Base.linearindexing{T<:Domain}(::Type{T}) = Base.LinearFast()
+Base.IndexStyle{T<:Domain}(::Type{T}) = Base.IndexLinear()
 
 
 # One interval
@@ -53,7 +53,7 @@ function compute_s(σ)
     q = nquad(domain(σ[2],σ[3]), SVector(σ[1],σ[4]))
     x,w = gaussjacobi(q, -0.5,-0.5)
     x = (σ[3]+σ[2])/2 + (σ[3]-σ[2])/2 * x
-    denom = sqrt(-(x-σ[1]).*(x-σ[4]))
+    denom = sqrt.(-(x-σ[1]).*(x-σ[4]))
     return sum(w.*x./denom)/sum(w./denom)
 end
 
@@ -61,7 +61,7 @@ function greens(D::Domain2I,z)
     σ = D.σ
     s = D.s
 
-    i = indmin(abs(z - σ))
+    i = indmin(abs.(z - σ))
     q = nquad(domain(σ[i],z), SVector(σ[mod1(i-1,4)],σ[mod1(i+1,4)]))
     x,w = gaussjacobi(q,0,-0.5)::Tuple{Vector{Float64},Vector{Float64}}
     x = (z + σ[i])/2 + (z - σ[i])/2 * x
