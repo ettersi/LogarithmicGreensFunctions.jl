@@ -4,12 +4,7 @@ export greens,domain
 
 csqrt(z) = sqrt(complex(z))
 
-# Need to turn domains into abstract arrays to make the dot syntax work
-# (e.g. greens(domain(-1,1),[-2,0,2]) )
-abstract type Domain{T} <: AbstractVector{T} end
-Base.size(::Domain) = (1,)
-Base.getindex(D::Domain,i::Int) = D
-Base.IndexStyle{T<:Domain}(::Type{T}) = Base.IndexLinear()
+abstract type Domain{T} end
 
 
 # One interval
@@ -22,9 +17,12 @@ end
 
 function greens(z)
     s = signbit(real(z)) ? -1 : 1
-    return log(abs(z + s*csqrt(z^2-1)))
+    return greens1(z,s)
 end
-function greens(D::Domain1I,z) 
+greens1(z::Complex,s) = greens2(z,s)
+greens1(z::Real,s) = abs(z) <= 1 ? zero(typeof(greens2(one(z),s))) : greens2(z,s)
+greens2(z,s) = log(abs(z + s*sqrt(z^2-1)))
+function greens(D::Domain1I,z)
     a,b = D.a,D.b
     greens(2/(b-a)*(z - (b+a)/2))
 end
