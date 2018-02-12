@@ -1,8 +1,9 @@
 module LogarithmicGreensFunctions
 
-export greens,domain
+export greens,domain,uni
 
 csqrt(z) = sqrt(complex(z))
+xlogx(x) = x == 0 ? zero(x*log(x)) : x*log(x)
 
 abstract type Domain{T} end
 
@@ -33,7 +34,7 @@ end
 using FastGaussQuadrature
 using StaticArrays
 
-function domain(a,b,c,d) 
+function domain(a,b,c,d)
     σ = SVector(a,b,c,d)
     Domain2I(σ,compute_s(σ))
 end
@@ -43,7 +44,7 @@ immutable Domain2I <: Domain{Domain2I}
 end
 
 # Estimate number of quadrature points needed to reach machine precision
-# Actually, the convergence rate is 2*greens(...), but dropping the factor 
+# Actually, the convergence rate is 2*greens(...), but dropping the factor
 # 2 balances that we are not estimating the prefactor
 nquad(D::Domain1I,σ) = ceil(Int,-log(eps(Float64))/minimum(greens.(D,σ)))
 
@@ -66,6 +67,16 @@ function greens(D::Domain2I,z)
     w *= csqrt((z - σ[i])/2)
 
     return real(sum([w*(x-s)/prod([csqrt(x-σ[j]) for j = [1:i-1;i+1:4]]) for (x,w) in zip(x,w)]))
+end
+
+
+# Uniform measure
+
+uni(z::Complex) = -1 + 0.5*real(xlogx(z+1) - xlogx(z-1))
+uni(z::Real) = uni(complex(z))
+function uni(D::Domain1I,z)
+    a,b = D.a,D.b
+    uni(2/(b-a)*(z - (b+a)/2))
 end
 
 end # module
